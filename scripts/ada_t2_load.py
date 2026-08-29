@@ -204,6 +204,13 @@ def main() -> None:
     Zfixed = np.column_stack([van_der_waerden(
         ordinal_scores(sim, c).to_numpy(dtype=float)) for c in fixed_cols])
     Sff = np.corrcoef(Zfixed, rowvar=False)
+    # A fixed input can be constant in a deliberately tiny smoke sample.
+    # Its empirical correlation is undefined; treat those off-diagonal
+    # entries as zero while preserving a valid correlation-matrix diagonal.
+    # Full-size runs with variable inputs are unchanged by this sanitation.
+    Sff = np.nan_to_num(Sff, nan=0.0, posinf=0.0, neginf=0.0)
+    np.fill_diagonal(Sff, 1.0)
+    Sff = nearest_psd(Sff)
     for i, a in enumerate(fixed_cols):
         for j, b in enumerate(fixed_cols):
             if j > i:
