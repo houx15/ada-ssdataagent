@@ -62,10 +62,10 @@ models:
     category: open_weight
     input_usd_per_m: 0.084
     output_usd_per_m: 0.168
-  qwen3_32b:
+  qwen38_flash:
     provider: openrouter
-    model: qwen/qwen3-32b
-    canonical_slug: qwen/qwen3-32b-04-28
-    category: medium_open_weight
-    input_usd_per_m: 0.08
-    output_usd_per_m: 0.28
+    model: qwen/qwen3.8-flash
+    canonical_slug: qwen/qwen3.8-flash-20260826
+    category: current_qwen_generation
+    input_usd_per_m: 0.15
+    output_usd_per_m: 0.47
