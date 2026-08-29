@@ -49,13 +49,13 @@ models:
     category: current_local_baseline
     input_usd_per_m: 0
     output_usd_per_m: 0
-  gpt56_luna:
+  gemini31_flash_lite:
     provider: openrouter
-    model: openai/gpt-5.6-luna
-    canonical_slug: openai/gpt-5.6-luna-pro-20260709
-    category: strong_closed_general
-    input_usd_per_m: 0.20
-    output_usd_per_m: 1.20
+    model: google/gemini-3.1-flash-lite
+    canonical_slug: google/gemini-3.1-flash-lite-20260507
+    category: strong_closed_efficient
+    input_usd_per_m: 0.25
+    output_usd_per_m: 1.50
   deepseek_v4_flash:
     provider: openrouter
     model: deepseek/deepseek-v4-flash

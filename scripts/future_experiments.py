@@ -171,7 +171,7 @@ class UnitRunner:
             env["SDTL_LLM_BASE_URL"] = provider["base_url"]
             env["SDTL_LLM_API_KEY"] = key
             env["SSBENCH_LLM_EXTRA_BODY"] = json.dumps(provider.get("extra_body", {}))
-            # GPT-5.6 Luna does not advertise temperature/top_p support.
+            # The paid matrix only sends parameters supported by every model.
             # Freeze the paid matrix to the request parameters common to all
             # selected OpenRouter models instead of weakening provider checks.
             env["SSBENCH_LLM_OMIT_SAMPLING_PARAMS"] = "1"
