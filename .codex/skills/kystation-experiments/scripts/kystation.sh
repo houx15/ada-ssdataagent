@@ -46,12 +46,23 @@ require_clean_main() {
 }
 
 sync_code() {
-  local local_sha remote_sha
+  local local_sha remote_sha sync_tmp bundle_path remote_bundle
   require_clean_main
   git -C "$LOCAL_ROOT" push origin main
-  ssh "$REMOTE_HOST" git -C "$REMOTE_DIR" pull --ff-only origin main
 
   local_sha="$(git -C "$LOCAL_ROOT" rev-parse HEAD)"
+  if ! ssh "$REMOTE_HOST" timeout 45 git -C "$REMOTE_DIR" pull --ff-only origin main; then
+    printf '%s\n' "Remote GitHub pull timed out; falling back to a verified git bundle." >&2
+    sync_tmp="$(mktemp -d "${TMPDIR:-/tmp}/ssbench-sync.XXXXXX")"
+    bundle_path="$sync_tmp/main.bundle"
+    remote_bundle="/tmp/ssbench-main-$local_sha.bundle"
+    git -C "$LOCAL_ROOT" bundle create "$bundle_path" main
+    scp "$bundle_path" "$REMOTE_HOST:$remote_bundle"
+    ssh "$REMOTE_HOST" \
+      "git -C '$REMOTE_DIR' fetch '$remote_bundle' main && git -C '$REMOTE_DIR' merge --ff-only FETCH_HEAD"
+    rm -rf "$sync_tmp"
+  fi
+
   remote_sha="$(ssh "$REMOTE_HOST" git -C "$REMOTE_DIR" rev-parse HEAD)"
   if [[ "$local_sha" != "$remote_sha" ]]; then
     printf 'SHA mismatch: local=%s remote=%s\n' "$local_sha" "$remote_sha" >&2
