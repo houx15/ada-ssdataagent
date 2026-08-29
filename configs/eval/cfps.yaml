@@ -1,0 +1,718 @@
+types:
+- t1
+- t2
+- t3
+- t4
+- t5
+bootstrap:
+  B: 100
+  alpha: 0.05
+  sample_n: 500
+t1:
+  variables:
+    ever_divorced:
+      name: Ever Divorced
+      type: categorical
+      description: Divorced or not lifetime
+      domain: Marriage
+      allowed:
+      - never divorced
+      - ever divorced
+    child_number:
+      name: Child Number
+      type: numeric
+      description: Number of children lifetime
+      domain: Marriage
+      allowed:
+        min: 0
+        max: 5
+    age_at_first_marriage:
+      name: Age at First Marriage
+      type: numeric
+      description: Age first got married
+      domain: Marriage
+      allowed:
+        min: 21
+        max: 78
+    occupation_30_40:
+      type: categorical
+      description: Main occupation between age 30 to 40
+      domain: SES
+      allowed:
+      - Legislators, senior officials and managers
+      - Professionals
+      - Technicians and associate professionals
+      - Clerks
+      - Service workers and shop and market sales workers
+      - Skilled agricultural and fishery workers
+      - Craft and related trades workers
+      - Plant and machine operators and assemblers
+      - Elementary occupations
+      - Armed forces
+      drop_values:
+      - unemployed
+    mean_income_30_40:
+      type: numeric
+      description: Average personal annual income between age 30 to 40
+      domain: SES
+      allowed:
+        type: numeric
+        min: 0
+        max: 10299996
+      log_transform: true
+    age_at_first_child:
+      name: Age at First Child
+      type: numeric
+      description: Age at first childbirth
+      domain: Marriage
+      allowed:
+        min: 21
+        max: 66
+    age_finished_education:
+      name: Age Finished Education
+      type: numeric
+      description: Age finished education
+      domain: SES
+      allowed:
+        min: 6
+        max: 63
+    highest_education:
+      name: Highest Education
+      type: categorical
+      description: Highest level of education attained
+      domain: SES
+      allowed:
+      - primary school or below
+      - middle school
+      - high school
+      - college and above
+    self_rated_health:
+      name: Self-rated Health
+      type: categorical
+      description: Self-rated health status
+      domain: Health
+      allowed:
+      - very healthy
+      - fairly healthy
+      - somewhat unhealthy
+      - unhealthy
+      - very unhealthy
+    self_rated_depression:
+      name: Self-rated Depression
+      type: numeric
+      description: Self-rated depression, higher score indicates stronger depressive feelings
+      domain: Health
+      allowed:
+        min: -18
+        max: 5
+    gender_role:
+      name: Gender Role
+      type: numeric
+      description: Belief about traditional gender roles; higher score indicates stronger traditional
+        gender norms
+      domain: Attitude
+      allowed:
+        min: -3
+        max: 1
+    fixed_mindset:
+      name: Fixed Mindset
+      type: numeric
+      description: Belief that intelligence/abilities are fixed; higher scores indicate stronger belief
+        in fixed abilities
+      domain: Ability
+      allowed:
+        min: 1
+        max: 5
+    growth_mindset:
+      name: Growth Mindset
+      type: numeric
+      description: Belief that abilities can be developed; higher scores indicate stronger belief in malleability
+        of ability
+      domain: Ability
+      allowed:
+        min: 1
+        max: 5
+    math_cognitive:
+      name: Math Cognitive Ability
+      type: numeric
+      description: Mathematical reasoning and problem-solving ability
+      domain: Ability
+      allowed:
+        min: 0
+        max: 24
+    verbal_cognitive:
+      name: Verbal Cognitive Ability
+      type: numeric
+      description: Verbal comprehension and reasoning ability
+      domain: Ability
+      allowed:
+        min: 0
+        max: 34
+    self_control:
+      name: Self Control
+      type: numeric
+      description: Self-control and emotional regulation ability
+      domain: Ability
+      allowed:
+        min: -5
+        max: 3
+    interpersonal_skills:
+      name: Interpersonal Skills
+      type: numeric
+      description: Social skills and interpersonal competence
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7
+    comprehension:
+      name: Comprehension
+      type: numeric
+      description: Ability to understand and interpret information
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7
+    expression:
+      name: Expression
+      type: numeric
+      description: Ability to communicate thoughts and feelings clearly
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7
+t2:
+  variables:
+    gender:
+      type: categorical
+      name: Gender
+      input: true
+      description: Gender
+      domain: Demography
+      allowed:
+      - Female
+      - Male
+    minzu:
+      name: Minzu
+      type: categorical
+      input: true
+      description: Ethnic or racial identity
+      domain: Demography
+      allowed:
+      - han
+      - minority
+    mother_education:
+      type: categorical
+      name: Mother’s Education
+      input: true
+      description: Mother's highest education
+      domain: Demography
+      allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+    father_education:
+      type: categorical
+      name: Father’s Education
+      input: true
+      description: Father's highest education
+      domain: Demography
+      allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+    ever_divorced:
+      name: Ever Divorced
+      type: categorical
+      description: Divorced or not lifetime
+      domain: Marriage
+      allowed:
+      - never divorced
+      - ever divorced
+    child_number:
+      name: Child Number
+      type: numeric
+      description: Number of children lifetime
+      domain: Marriage
+      allowed:
+        min: 0
+        max: 5
+    age_at_first_marriage:
+      name: Age at First Marriage
+      type: numeric
+      description: Age first got married
+      domain: Marriage
+      allowed:
+        min: 21
+        max: 78
+    age_at_first_child:
+      name: Age at First Child
+      type: numeric
+      description: Age at first childbirth
+      domain: Marriage
+      allowed:
+        min: 21
+        max: 66
+    age_finished_education:
+      name: Age Finished Education
+      type: numeric
+      description: Age finished education
+      domain: SES
+      allowed:
+        min: 6
+        max: 63
+    occupation_30_40:
+      type: categorical
+      description: Main occupation between age 30 to 40
+      domain: SES
+      allowed:
+      - Legislators, senior officials and managers
+      - Professionals
+      - Technicians and associate professionals
+      - Clerks
+      - Service workers and shop and market sales workers
+      - Skilled agricultural and fishery workers
+      - Craft and related trades workers
+      - Plant and machine operators and assemblers
+      - Elementary occupations
+      - Armed forces
+      drop_values:
+      - unemployed
+    mean_income_30_40:
+      type: numeric
+      description: Average personal annual income between age 30 to 40
+      domain: SES
+      allowed:
+        type: numeric
+        min: 0
+        max: 10299996
+      log_transform: true
+    self_rated_health:
+      name: Self-rated Health
+      type: categorical
+      description: Self-rated health status
+      domain: Health
+      allowed:
+      - very healthy
+      - fairly healthy
+      - somewhat unhealthy
+      - unhealthy
+      - very unhealthy
+    self_rated_depression:
+      name: Self-rated Depression
+      type: numeric
+      description: Self-rated depression, higher score indicates stronger depressive feelings
+      domain: Health
+      allowed:
+        min: -18
+        max: 5
+    gender_role:
+      name: Gender Role
+      type: numeric
+      description: Belief about traditional gender roles; higher score indicates stronger traditional
+        gender norms
+      domain: Attitude
+      allowed:
+        min: -3
+        max: 1
+    fixed_mindset:
+      name: Fixed Mindset
+      type: numeric
+      description: Belief that intelligence/abilities are fixed; higher scores indicate stronger belief
+        in fixed abilities
+      domain: Ability
+      allowed:
+        min: 1
+        max: 5
+    growth_mindset:
+      name: Growth Mindset
+      type: numeric
+      description: Belief that abilities can be developed; higher scores indicate stronger belief in malleability
+        of ability
+      domain: Ability
+      allowed:
+        min: 1
+        max: 5
+    math_cognitive:
+      name: Math Cognitive Ability
+      type: numeric
+      description: Mathematical reasoning and problem-solving ability
+      domain: Ability
+      allowed:
+        min: 0
+        max: 24
+    verbal_cognitive:
+      name: Verbal Cognitive Ability
+      type: numeric
+      description: Verbal comprehension and reasoning ability
+      domain: Ability
+      allowed:
+        min: 0
+        max: 34
+    self_control:
+      name: Self Control
+      type: numeric
+      description: Self-control and emotional regulation ability
+      domain: Ability
+      allowed:
+        min: -5
+        max: 3
+    interpersonal_skills:
+      name: Interpersonal Skills
+      type: numeric
+      description: Social skills and interpersonal competence
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7
+    comprehension:
+      name: Comprehension
+      type: numeric
+      description: Ability to understand and interpret information
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7
+    highest_education:
+      name: Highest Education
+      type: categorical
+      description: Highest level of education attained
+      domain: SES
+      allowed:
+      - primary school or below
+      - middle school
+      - high school
+      - college and above
+    expression:
+      name: Expression
+      type: numeric
+      description: Ability to communicate thoughts and feelings clearly
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7
+t3:
+  model_type:
+  - ols
+  - ols
+  - ols
+  - ols
+  - ols
+  - ols
+  - ols
+  - ols
+  - ols
+  - ols
+  responses:
+    age_at_first_marriage:
+      name: Age at First Marriage
+      type: numeric
+      description: Age first got married
+      domain: Marriage
+      allowed:
+        min: 21
+        max: 78
+    age_at_first_child:
+      name: Age at First Child
+      type: numeric
+      description: Age at first childbirth
+      domain: Marriage
+      allowed:
+        min: 21
+        max: 66
+    age_finished_education:
+      name: Age Finished Education
+      type: numeric
+      description: Age finished education
+      domain: SES
+      allowed:
+        min: 6
+        max: 63
+    gender_role:
+      name: Gender Role
+      type: numeric
+      description: Belief about traditional gender roles; higher score indicates stronger traditional
+        gender norms
+      domain: Attitude
+      allowed:
+        min: -3
+        max: 1
+    mean_income_30_40:
+      type: numeric
+      description: Average personal annual income between age 30 to 40
+      domain: SES
+      allowed:
+        type: numeric
+        min: 0
+        max: 10299996
+      log_transform: true
+    fixed_mindset:
+      name: Fixed Mindset
+      type: numeric
+      description: Belief that intelligence/abilities are fixed; higher scores indicate stronger belief
+        in fixed abilities
+      domain: Ability
+      allowed:
+        min: 1
+        max: 5
+    growth_mindset:
+      name: Growth Mindset
+      type: numeric
+      description: Belief that abilities can be developed; higher scores indicate stronger belief in malleability
+        of ability
+      domain: Ability
+      allowed:
+        min: 1
+        max: 5
+    math_cognitive:
+      name: Math Cognitive Ability
+      type: numeric
+      description: Mathematical reasoning and problem-solving ability
+      domain: Ability
+      allowed:
+        min: 0
+        max: 24
+    verbal_cognitive:
+      name: Verbal Cognitive Ability
+      type: numeric
+      description: Verbal comprehension and reasoning ability
+      domain: Ability
+      allowed:
+        min: 0
+        max: 34
+    self_control:
+      name: Self Control
+      type: numeric
+      description: Self-control and emotional regulation ability
+      domain: Ability
+      allowed:
+        min: -5
+        max: 3
+  predictors:
+    highest_education:
+      name: Highest Education
+      type: categorical
+      domain: SES
+      allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+    minzu:
+      name: Minzu
+      type: categorical
+      input: true
+      description: Ethnic or racial identity
+      domain: Demography
+      allowed:
+      - han
+      - minority
+    gender:
+      type: categorical
+      name: Gender
+      description: Gender
+      domain: Demography
+t4:
+  events:
+    age_finished_education:
+      name: E
+    age_at_first_child:
+      name: C
+    age_at_first_marriage:
+      name: M
+t5:
+  events:
+    age_finished_education:
+      name: E
+    age_at_first_child:
+      name: C
+    age_at_first_marriage:
+      name: M
+  predictors:
+    gender:
+      type: categorical
+      name: Gender
+      input: true
+      description: Gender
+      domain: Demography
+      allowed:
+      - Female
+      - Male
+    minzu:
+      name: Minzu
+      type: categorical
+      input: true
+      description: Ethnic or racial identity
+      domain: Demography
+      allowed:
+      - han
+      - minority
+    mother_education:
+      type: categorical
+      name: Mother’s Education
+      input: true
+      description: Mother's highest education
+      domain: Demography
+      allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+    father_education:
+      type: categorical
+      name: Father’s Education
+      input: true
+      description: Father's highest education
+      domain: Demography
+      allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+    ever_divorced:
+      name: Ever Divorced
+      type: categorical
+      description: Divorced or not lifetime
+      domain: Marriage
+      allowed:
+      - never divorced
+      - ever divorced
+    child_number:
+      name: Child Number
+      type: numeric
+      description: Number of children lifetime
+      domain: Marriage
+      allowed:
+        min: 0
+        max: 5
+    self_rated_health:
+      name: Self-rated Health
+      type: categorical
+      description: Self-rated health status
+      domain: Health
+      allowed:
+      - very healthy
+      - fairly healthy
+      - somewhat unhealthy
+      - unhealthy
+      - very unhealthy
+    self_rated_depression:
+      name: Self-rated Depression
+      type: numeric
+      description: Self-rated depression, higher score indicates stronger depressive feelings
+      domain: Health
+      allowed:
+        min: -18
+        max: 5
+    gender_role:
+      name: Gender Role
+      type: numeric
+      description: Belief about traditional gender roles; higher score indicates stronger traditional
+        gender norms
+      domain: Attitude
+      allowed:
+        min: -3
+        max: 1
+    fixed_mindset:
+      name: Fixed Mindset
+      type: numeric
+      description: Belief that intelligence/abilities are fixed; higher scores indicate stronger belief
+        in fixed abilities
+      domain: Ability
+      allowed:
+        min: 1
+        max: 5
+    occupation_30_40:
+      type: categorical
+      description: Main occupation between age 30 to 40
+      domain: SES
+      allowed:
+      - Legislators, senior officials and managers
+      - Professionals
+      - Technicians and associate professionals
+      - Clerks
+      - Service workers and shop and market sales workers
+      - Skilled agricultural and fishery workers
+      - Craft and related trades workers
+      - Plant and machine operators and assemblers
+      - Elementary occupations
+      - Armed forces
+      drop_values:
+      - unemployed
+    mean_income_30_40:
+      type: numeric
+      description: Average personal annual income between age 30 to 40
+      domain: SES
+      allowed:
+        type: numeric
+        min: 0
+        max: 10299996
+      log_transform: true
+    growth_mindset:
+      name: Growth Mindset
+      type: numeric
+      description: Belief that abilities can be developed; higher scores indicate stronger belief in malleability
+        of ability
+      domain: Ability
+      allowed:
+        min: 1
+        max: 5
+    math_cognitive:
+      name: Math Cognitive Ability
+      type: numeric
+      description: Mathematical reasoning and problem-solving ability
+      domain: Ability
+      allowed:
+        min: 0
+        max: 24
+    verbal_cognitive:
+      name: Verbal Cognitive Ability
+      type: numeric
+      description: Verbal comprehension and reasoning ability
+      domain: Ability
+      allowed:
+        min: 0
+        max: 34
+    self_control:
+      name: Self Control
+      type: numeric
+      description: Self-control and emotional regulation ability
+      domain: Ability
+      allowed:
+        min: -5
+        max: 3
+    interpersonal_skills:
+      name: Interpersonal Skills
+      type: numeric
+      description: Social skills and interpersonal competence
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7
+    comprehension:
+      name: Comprehension
+      type: numeric
+      description: Ability to understand and interpret information
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7
+    highest_education:
+      name: Highest Education
+      type: categorical
+      description: Highest level of education attained
+      domain: SES
+      allowed:
+      - primary school or below
+      - middle school
+      - high school
+      - college and above
+    expression:
+      name: Expression
+      type: numeric
+      description: Ability to communicate thoughts and feelings clearly
+      domain: Ability
+      allowed:
+        min: 1
+        max: 7

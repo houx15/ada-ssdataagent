@@ -1,0 +1,532 @@
+types:
+- t1
+- t2
+- t3
+bootstrap:
+  B: 100
+  alpha: 0.05
+  sample_n: 500
+t1:
+  variables:
+    marital_status:
+      type: categorical
+      description: Marital status
+      domain: Marriage
+      allowed:
+      - Married
+      - Divorced/widowed
+      - Single
+    child_number:
+      type: numeric
+      description: Number of Child ever born
+      domain: Marriage
+      allowed:
+        min: 0
+        max: 8
+    age_first_childbirth:
+      type: numeric
+      description: Age at first childbirth
+      domain: Marriage
+      allowed:
+        min: 17
+        max: 45
+        special:
+        - No Child
+    education:
+      type: categorical
+      description: Educational attainment
+      domain: SES
+      allowed:
+      - Less than high school
+      - High school
+      - College and above
+    laborforce:
+      type: categorical
+      description: Whether the respondent participated in the labor force
+      domain: SES
+      allowed:
+      - Not in the labor force
+      - In the labor force
+    occupation:
+      type: categorical
+      description: Occupation
+      domain: SES
+      allowed:
+      - Management, professional, and related occupations
+      - Service occupations
+      - Sales and office occupations
+      - Natural resources, construction, and maintenance occupations
+      - Production, transportation, and material moving occupations
+      - Military Occupations
+      drop_values:
+      - Unemployed
+    spouse_occupation:
+      type: categorical
+      description: Spouse's occupation
+      domain: SES
+      allowed:
+      - Management, professional, and related occupations
+      - Service occupations
+      - Sales and office occupations
+      - Natural resources, construction, and maintenance occupations
+      - Production, transportation, and material moving occupations
+      - Military Occupations
+      - No spouse
+      drop_values:
+      - No spouse
+    income:
+      type: categorical
+      description: Income from occupation last year
+      domain: SES
+      allowed:
+      - LT $5000
+      - $5000 TO 9999
+      - $10000 OR MORE
+      drop_values:
+      - Unemployed
+    wealth:
+      type: categorical
+      description: Total personal wealth
+      domain: SES
+      allowed:
+      - LT $40000
+      - $40000 TO 500000
+      - More than $500000
+    health:
+      type: categorical
+      description: Self-evaluated health condition
+      domain: Health
+      allowed:
+      - Excellent
+      - Good
+      - Fair
+      - Poor
+    depress:
+      type: categorical
+      description: Ever had depression or not
+      domain: Health
+      allowed:
+      - Had depression
+      - No depression
+    isolated:
+      type: categorical
+      description: how often in the past 4 weeks has felt isolated from others
+      domain: Health
+      allowed:
+      - Never
+      - Rarely
+      - Sometimes
+      - Often
+      - Very often
+    lonely:
+      type: categorical
+      description: how often in the past 4 weeks has felt that lack companionship
+      domain: Health
+      allowed:
+      - Never
+      - Rarely
+      - Sometimes
+      - Often
+      - Very often
+    mental_health:
+      type: numeric
+      description: how many days during the past 30 days was mental health condition not good
+      domain: Health
+      allowed:
+        min: 0
+        max: 30
+    gender_role_attitude:
+      type: categorical
+      description: Attitude toward gender roles
+      domain: Attitude
+      allowed:
+      - Agree
+      - Disagree
+    happy:
+      type: categorical
+      description: General happiness
+      domain: Attitude
+      allowed:
+      - Very happy
+      - Pretty happy
+      - Not too happy
+    political_view:
+      type: categorical
+      description: Political view
+      domain: Attitude
+      allowed:
+      - Liberal
+      - Middle
+      - Conservative
+    satisfy_job:
+      type: categorical
+      description: Satisfaction with work
+      domain: Attitude
+      allowed:
+      - Very satisfied
+      - Moderately satisfied
+      - A little dissatisfied
+      - Very dissatisfied
+    trust:
+      type: categorical
+      description: Trust with people
+      domain: Attitude
+      allowed:
+      - Most people can be trusted
+      - Can't be too careful
+      - Depends
+    vocabulary_test:
+      type: numeric
+      description: Total number of correct words in a vocabulary test
+      domain: Ability
+      allowed:
+        min: 0
+        max: 10
+    work_hard:
+      type: categorical
+      description: Importance of working hard
+      domain: Ability
+      allowed:
+      - MOST IMPORTANT
+      - 2ND IMPORTANT
+      - 3RD IMPORTANT
+      - 4TH IMPORTANT
+      - LEAST IMPORTANT
+t2:
+  variables:
+    age:
+      type: numeric
+      input: true
+      description: Age
+      domain: Demography
+      allowed:
+        min: 18
+        max: 89
+    gender:
+      type: categorical
+      input: true
+      description: Sex
+      domain: Demography
+      allowed:
+      - Female
+      - Male
+    race:
+      type: categorical
+      input: true
+      description: Racial/ethnic identification
+      domain: Demography
+      allowed:
+      - Black
+      - Hispanic
+      - Non-Black, Non-Hispanic
+    immigrant_status:
+      input: true
+      type: categorical
+      description: Immigration status
+      domain: Demography
+      allowed:
+      - Non-immigrant
+      - Immigrant
+    mother_education:
+      input: true
+      type: categorical
+      description: Mother's educational attainment
+      domain: Demography
+      allowed:
+      - Less than high school
+      - High school
+      - College and above
+    father_education:
+      input: true
+      type: categorical
+      description: Father's educational attainment
+      domain: Demography
+      allowed:
+      - Less than high school
+      - High school
+      - College and above
+    mother_occupation:
+      input: true
+      type: categorical
+      description: Mother's occupation
+      domain: Demography
+      allowed:
+      - Management, professional, and related occupations
+      - Service occupations
+      - Sales and office occupations
+      - Natural resources, construction, and maintenance occupations
+      - Production, transportation, and material moving occupations
+      - Military Occupations
+    father_occupation:
+      input: true
+      type: categorical
+      description: Father's occupation
+      domain: Demography
+      allowed:
+      - Management, professional, and related occupations
+      - Service occupations
+      - Sales and office occupations
+      - Natural resources, construction, and maintenance occupations
+      - Production, transportation, and material moving occupations
+      - Military Occupations
+    marital_status:
+      type: categorical
+      description: Marital status
+      domain: Marriage
+      allowed:
+      - Married
+      - Divorced/widowed
+      - Single
+    child_number:
+      type: numeric
+      description: Number of Child ever born
+      domain: Marriage
+      allowed:
+        min: 0
+        max: 8
+    age_first_childbirth:
+      type: numeric
+      description: Age at first childbirth
+      domain: Marriage
+      allowed:
+        min: 17
+        max: 45
+        special:
+        - No Child
+    education:
+      type: categorical
+      description: Educational attainment
+      domain: SES
+      allowed:
+      - Less than high school
+      - High school
+      - College and above
+    laborforce:
+      type: categorical
+      description: Whether the respondent participated in the labor force
+      domain: SES
+      allowed:
+      - Not in the labor force
+      - In the labor force
+    occupation:
+      type: categorical
+      description: Occupation
+      domain: SES
+      allowed:
+      - Management, professional, and related occupations
+      - Service occupations
+      - Sales and office occupations
+      - Natural resources, construction, and maintenance occupations
+      - Production, transportation, and material moving occupations
+      - Military Occupations
+      drop_values:
+      - Unemployed
+    spouse_occupation:
+      type: categorical
+      description: Spouse's occupation
+      domain: SES
+      allowed:
+      - Management, professional, and related occupations
+      - Service occupations
+      - Sales and office occupations
+      - Natural resources, construction, and maintenance occupations
+      - Production, transportation, and material moving occupations
+      - Military Occupations
+      drop_values:
+      - No spouse
+    income:
+      type: categorical
+      description: Income from occupation last year
+      domain: SES
+      allowed:
+      - LT $5000
+      - $5000 TO 9999
+      - $10000 OR MORE
+      drop_values:
+      - Unemployed
+    wealth:
+      type: categorical
+      description: Total personal wealth
+      domain: SES
+      allowed:
+      - LT $40000
+      - $40000 TO 500000
+      - More than $500000
+    health:
+      type: categorical
+      description: Self-evaluated health condition
+      domain: Health
+      allowed:
+      - Excellent
+      - Good
+      - Fair
+      - Poor
+    depress:
+      type: categorical
+      description: Ever had depression or not
+      domain: Health
+      allowed:
+      - Had depression
+      - No depression
+    isolated:
+      type: categorical
+      description: how often in the past 4 weeks has felt isolated from others
+      domain: Health
+      allowed:
+      - Never
+      - Rarely
+      - Sometimes
+      - Often
+      - Very often
+    lonely:
+      type: categorical
+      description: how often in the past 4 weeks has felt that lack companionship
+      domain: Health
+      allowed:
+      - Never
+      - Rarely
+      - Sometimes
+      - Often
+      - Very often
+    mental_health:
+      type: numeric
+      description: how many days during the past 30 days was mental health condition not good
+      domain: Health
+      allowed:
+        min: 0
+        max: 30
+    gender_role_attitude:
+      type: categorical
+      description: Attitude toward gender roles
+      domain: Attitude
+      allowed:
+      - Agree
+      - Disagree
+    happy:
+      type: categorical
+      description: General happiness
+      domain: Attitude
+      allowed:
+      - Very happy
+      - Pretty happy
+      - Not too happy
+    political_view:
+      type: categorical
+      description: Political view
+      domain: Attitude
+      allowed:
+      - Liberal
+      - Middle
+      - Conservative
+    satisfy_job:
+      type: categorical
+      description: Satisfaction with work
+      domain: Attitude
+      allowed:
+      - Very satisfied
+      - Moderately satisfied
+      - A little dissatisfied
+      - Very dissatisfied
+    trust:
+      type: categorical
+      description: Trust with people
+      domain: Attitude
+      allowed:
+      - Most people can be trusted
+      - Can't be too careful
+      - Depends
+    vocabulary_test:
+      type: numeric
+      description: Total number of correct words in a vocabulary test
+      domain: Ability
+      allowed:
+        min: 0
+        max: 10
+    work_hard:
+      type: categorical
+      description: Importance of working hard
+      domain: Ability
+      allowed:
+      - MOST IMPORTANT
+      - 2ND IMPORTANT
+      - 3RD IMPORTANT
+      - 4TH IMPORTANT
+      - LEAST IMPORTANT
+t3:
+  model_type:
+  - ols
+  - ols
+  - ols
+  - ols
+  responses:
+    age_first_childbirth:
+      name: Age at First Childbirth
+      type: numeric
+      description: Age at first childbirth
+      domain: Marriage
+      allowed:
+        min: 12
+        max: 90
+    child_number:
+      name: Child Number
+      type: numeric
+      description: Number of children ever born
+      domain: Marriage
+      allowed:
+        min: 0
+        max: 12
+    mental_health:
+      type: numeric
+      description: how many days during the past 30 days was mental health condition not good
+      domain: Health
+      allowed:
+        type: numeric
+        min: 0
+        max: 30
+    vocabulary_test:
+      type: numeric
+      description: Total number of correct words in a vocabulary test, which is an indicator of the level
+        of cognitive skills
+      domain: Ability
+      allowed:
+        type: numeric
+        min: 0
+        max: 10
+  predictors:
+    age:
+      name: Age
+      type: numeric
+      input: true
+      description: Age
+      domain: Demography
+      allowed:
+        min: 0
+        max: 90
+    gender:
+      name: Gender
+      type: categorical
+      input: true
+      description: Sex
+      domain: Demography
+      allowed:
+      - Female
+      - Male
+    race:
+      name: Race
+      type: categorical
+      input: true
+      description: Racial/ethnic identification
+      domain: Demography
+      allowed:
+      - Non-Black, Non-Hispanic
+      - Hispanic
+      - Black
+    education:
+      name: Education
+      type: categorical
+      description: Educational attainment
+      domain: SES
+      allowed:
+      - Less than high school
+      - High school
+      - College and above

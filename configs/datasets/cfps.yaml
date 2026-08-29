@@ -1,0 +1,251 @@
+context: 'population of all age groups residing in China as of 2010.
+
+  '
+population_context:
+  reference_year: 2010
+  age_range:
+  - 14
+  - 45
+  region: China
+input_variables:
+  gender:
+    type: static
+    description: Sex
+    domain: Demography
+    allowed:
+    - Female
+    - Male
+  birth_year:
+    type: static
+    description: Birth Year
+    domain: Demography
+    allowed:
+      type: numeric
+      min: 1900
+      max: 2010
+  minzu:
+    type: static
+    description: ethnic or racial identity
+    domain: Demography
+    allowed:
+    - han
+    - minority
+  mother_education:
+    type: static
+    description: Mother's education
+    domain: Demography
+    allowed:
+    - primary school or below
+    - middle school
+    - high school
+    - college and above
+  father_education:
+    type: static
+    description: Father's education
+    domain: Demography
+    allowed:
+    - primary school or below
+    - middle school
+    - high school
+    - college and above
+output_variables:
+  marital_status:
+    type: sequential
+    description: marital status
+    domain: Marriage
+    allowed:
+    - cohabitation
+    - divorced
+    - married
+    - single
+    - widowed
+  children_number:
+    type: sequential
+    description: Number of children
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 0
+      max: 5
+      special:
+      - 6 or above
+  education:
+    type: sequential
+    description: Level of education attained
+    domain: SES
+    allowed:
+    - primary school or below
+    - middle school
+    - high school
+    - college and above
+  occupation:
+    type: sequential
+    description: Occupation
+    domain: SES
+    allowed:
+    - Legislators, senior officials and managers
+    - Professionals
+    - Technicians and associate professionals
+    - Clerks
+    - Service workers and shop and market sales workers
+    - Skilled agricultural and fishery workers
+    - Craft and related trades workers
+    - Plant and machine operators and assemblers
+    - Elementary occupations
+    - Armed forces
+    - unemployed
+  income:
+    type: sequential
+    description: Personal annual income
+    domain: SES
+    allowed:
+      type: numeric
+      min: 0
+      max: 10299996
+  employment:
+    type: sequential
+    description: Current job status
+    domain: SES
+    allowed:
+    - unemployed
+    - employed
+  gender_role:
+    type: static
+    description: Belief about traditional gender roles, where a higher score indicates stronger traditional
+      gender norms and role differentiation.
+    domain: Attitude
+    allowed:
+      type: numeric
+      min: -3
+      max: 1
+  fixed_mindset:
+    type: static
+    description: Belief that intelligence and abilities are fixed and cannot be significantly changed;
+      higher scores indicate stronger belief in fixed abilities.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 5
+  growth_mindset:
+    type: static
+    description: Belief that intelligence and abilities can be developed through effort and learning;
+      higher scores indicate stronger belief in the malleability of ability.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 5
+  math_cognitive:
+    type: static
+    description: Mathematical reasoning and problem-solving ability; higher scores indicate stronger math
+      proficiency and cognitive performance.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 0
+      max: 24
+  verbal_cognitive:
+    type: static
+    description: Verbal comprehension and language-based reasoning ability; higher scores indicate stronger
+      verbal understanding and reasoning capacity.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 0
+      max: 34
+  self_control:
+    type: static
+    description: Ability to regulate one's behavior, emotions, and impulses to achieve goals; higher scores
+      indicate greater self-discipline and emotional regulation.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: -5
+      max: 3
+  interpersonal_skills:
+    type: static
+    description: Ability to interact effectively and harmoniously with others, rated by interviewers;
+      higher scores indicate stronger social skills and interpersonal competence.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 7
+  comprehension:
+    type: static
+    description: Ability to understand and interpret information accurately, rated by interviewers; higher
+      scores indicate better understanding and cognitive grasp of information.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 7
+  expression:
+    type: static
+    description: Ability to communicate thoughts and feelings clearly and effectively, rated by interviewers;
+      higher scores indicate greater clarity, fluency, and expressiveness.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 7
+  self_rated_health:
+    type: static
+    description: Self-rated health status
+    domain: Health
+    allowed:
+    - very healthy
+    - fairly healthy
+    - somewhat unhealthy
+    - unhealthy
+    - very unhealthy
+  self_rated_depression:
+    type: static
+    description: Self-rated depression, with higher scores indicating stronger depressive feelings
+    domain: Health
+    allowed:
+      type: numeric
+      min: -18
+      max: 5
+postprocess_modules:
+- age_at_first_marriage
+- ever_divorced
+- age_at_first_child
+- age_finished_education
+- age_started_work
+- child_number
+- occupation_30_40
+- mean_income_30_40
+- highest_education
+preprocessing:
+  source: data/real_data/cfps/cfps_2010_2022.csv
+  drop_first_column: false
+  require_complete_inputs: true
+  static_columns:
+    - age_at_first_marriage
+    - age_at_first_child
+    - age_finished_education
+    - child_number
+    - ever_divorced
+    - highest_education
+    - self_rated_health
+    - self_rated_depression
+    - gender_role
+    - fixed_mindset
+    - growth_mindset
+    - math_cognitive
+    - verbal_cognitive
+    - self_control
+    - interpersonal_skills
+    - comprehension
+    - expression
+  derived_columns:
+    occupation_30_40:
+      kind: mode_over_ages
+      prefix: occupation
+      ages: [30, 40]
+    mean_income_30_40:
+      kind: mean_over_ages
+      prefix: income
+      ages: [30, 40]

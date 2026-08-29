@@ -1,0 +1,47 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Local tools, editors, and operating-system files
+.opencode/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Licensed/private survey data and prepared datasets
+data/
+
+# Source snapshots and nested repositories used for local comparison
+raw/
+
+# Generated experiment and analysis artifacts
+runs/
+analysis_out/
+
+# Logs and temporary files
+*.log
+tmp/
+.tmp/
