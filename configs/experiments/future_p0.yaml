@@ -48,13 +48,6 @@ models:
     category: strong_closed_general
     input_usd_per_m: 0.20
     output_usd_per_m: 1.20
-  glm53_flash:
-    provider: openrouter
-    model: z-ai/glm-5.3-flash
-    canonical_slug: z-ai/glm-5.3-flash-20260826
-    category: chinese_context
-    input_usd_per_m: 0.075
-    output_usd_per_m: 0.25
   deepseek_v4_flash:
     provider: openrouter
     model: deepseek/deepseek-v4-flash
