@@ -87,7 +87,7 @@ def run_t3(
         valid_r = df_r[cols].notna().all(axis=1).to_numpy()
         valid_s = df_s[cols].notna().all(axis=1).to_numpy()
         min_n = len(xs) * 2 + 2
-        rng = RngPair()
+        rng = RngPair(boot.seed)
         points, fit_fail = [], 0
 
         for _ in range(boot.B):

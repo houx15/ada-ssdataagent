@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import json
+import os
 import random
 import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from openai import OpenAI
+
+from ssbench.llm.usage import BudgetExceededError, budgeted_chat_guard, record_usage
 
 SYSTEM_JSON = "You are a strict JSON generator. Output valid JSON only."
 
@@ -20,6 +24,9 @@ class LLMResponse:
     finish_reason: Optional[str]
     usage: dict[str, Any] = field(default_factory=dict)
     attempts: int = 1
+    requested_model: Optional[str] = None
+    resolved_model: Optional[str] = None
+    response_id: Optional[str] = None
 
     @property
     def ok(self) -> bool:
@@ -61,6 +68,14 @@ class LLMClient:
         last_error: Optional[Exception] = None
         for attempt in range(1, self.max_retries + 1):
             try:
+                budgeted_chat_guard()
+                extra_body = {}
+                raw_extra = os.getenv("SSBENCH_LLM_EXTRA_BODY")
+                if raw_extra:
+                    parsed = json.loads(raw_extra)
+                    if not isinstance(parsed, dict):
+                        raise ValueError("SSBENCH_LLM_EXTRA_BODY must be a JSON object")
+                    extra_body = parsed
                 resp = self._client.chat.completions.create(
                     model=self.model,
                     messages=messages,
@@ -68,22 +83,39 @@ class LLMClient:
                     top_p=self.top_p,
                     max_tokens=self.max_tokens,
                     **({"response_format": {"type": "json_object"}} if self.json_mode else {}),
+                    **({"extra_body": extra_body} if extra_body else {}),
                 )
                 choice = resp.choices[0]
-                usage = {}
+                usage: dict[str, Any] = {}
                 if getattr(resp, "usage", None) is not None:
-                    usage = {
-                        "prompt_tokens": resp.usage.prompt_tokens,
-                        "completion_tokens": resp.usage.completion_tokens,
-                    }
+                    if hasattr(resp.usage, "model_dump"):
+                        usage = resp.usage.model_dump(exclude_none=True)
+                    else:
+                        usage = {
+                            "prompt_tokens": getattr(resp.usage, "prompt_tokens", 0),
+                            "completion_tokens": getattr(resp.usage, "completion_tokens", 0),
+                        }
+                resolved_model = getattr(resp, "model", None)
+                response_id = getattr(resp, "id", None)
+                record_usage(
+                    requested_model=self.model,
+                    resolved_model=resolved_model,
+                    response_id=response_id,
+                    usage=usage,
+                )
                 content = _extract_content(choice.message)
                 return LLMResponse(
                     content=content,
                     finish_reason=choice.finish_reason,
                     usage=usage,
                     attempts=attempt,
+                    requested_model=self.model,
+                    resolved_model=resolved_model,
+                    response_id=response_id,
                 )
             except Exception as e:  # noqa: BLE001 - deliberate broad catch for retry
+                if isinstance(e, BudgetExceededError):
+                    raise
                 if not _is_retryable(e) or attempt == self.max_retries:
                     if isinstance(e, Exception):
                         last_error = e

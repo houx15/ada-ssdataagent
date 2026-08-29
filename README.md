@@ -4,6 +4,11 @@ SSDataBench（GSS + CFPS）的独立复现与扩展实验框架。
 
 **操作手册见 [docs/HOWTO.md](docs/HOWTO.md)** —— 完整流程、命令详解、断点续跑、产物说明、常见问题。
 
+下一阶段的多模型、消融、稳定性、成本与一致性实验由
+`scripts/future_experiments.py` 统一编排；冻结配置见
+`configs/experiments/future_p0.yaml`，研究清单见
+`docs/FUTURE_EXPERIMENTS.md`。
+
 ## 结构
 
 ```

@@ -24,6 +24,8 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--tag", default=None)
     ap.add_argument("--resume-dir", default=None, help="existing run directory to continue")
+    ap.add_argument("--run-dir", default=None,
+                    help="exact output directory for a new run")
     args = ap.parse_args()
 
     run_simulation(
@@ -38,6 +40,7 @@ def main():
         seed=args.seed,
         tag=args.tag,
         resume_dir=args.resume_dir,
+        run_dir=args.run_dir,
     )
 
 

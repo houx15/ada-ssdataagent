@@ -60,6 +60,8 @@ def evaluate_run(
     types: list[str] | None = None,
     B: int | None = None,
     sample_n: int | None = None,
+    seed: int | None = None,
+    output_dir: str | None = None,
 ) -> dict:
     run_dir = os.path.abspath(run_dir)
     with open(os.path.join(run_dir, "meta.json"), "r", encoding="utf-8") as f:
@@ -72,6 +74,8 @@ def evaluate_run(
         boot.B = B
     if sample_n is not None:
         boot.sample_n = sample_n
+    if seed is not None:
+        boot.seed = seed
 
     types = types or eval_cfg["types"]
     unknown = [t for t in types if t not in eval_cfg or t not in _RUNNERS]
@@ -81,7 +85,7 @@ def evaluate_run(
     df_real = pd.read_csv(os.path.join(run_dir, "real.csv"), low_memory=False)
     df_sim = pd.read_csv(os.path.join(run_dir, "sim.csv"), low_memory=False)
 
-    out_dir = os.path.join(run_dir, "evaluation")
+    out_dir = os.path.abspath(output_dir) if output_dir else os.path.join(run_dir, "evaluation")
     os.makedirs(out_dir, exist_ok=True)
 
     rows = []
@@ -107,4 +111,5 @@ def evaluate_run(
     print("\n================ EVAL SUMMARY ================")
     print(summary.to_string(index=False))
     print(f"[eval] written -> {out_dir}")
-    return {"overall": overall, "per_type": rows, "output_dir": out_dir}
+    return {"overall": overall, "per_type": rows, "output_dir": out_dir,
+            "bootstrap_seed": boot.seed}

@@ -45,6 +45,7 @@ def run_simulation(
     runs_root: Optional[str] = None,
     tag: Optional[str] = None,
     resume_dir: Optional[str] = None,
+    run_dir: Optional[str] = None,
 ) -> RunResult:
     """Run one simulation. Pass ``resume_dir`` (an existing run directory) to continue it."""
     settings = get_settings()
@@ -72,6 +73,8 @@ def run_simulation(
     )
     gen = create_method(method, client=client, max_attempts=max_attempts)
 
+    if resume_dir and run_dir:
+        raise ValueError("resume_dir and run_dir are mutually exclusive")
     if resume_dir:
         run_dir = os.path.abspath(resume_dir)
         if not os.path.exists(os.path.join(run_dir, "meta.json")):
@@ -83,6 +86,12 @@ def run_simulation(
         if old_meta.get("seed") != seed:
             print(f"[run] WARNING: seed differs from original run "
                   f"({seed} vs {old_meta.get('seed')}); input rows may not match.")
+    elif run_dir:
+        run_dir = os.path.abspath(run_dir)
+        if os.path.exists(os.path.join(run_dir, "meta.json")):
+            raise FileExistsError(
+                f"{run_dir} is already a completed run; use resume_dir to continue it"
+            )
     else:
         run_id = datetime.now().strftime("%Y%m%d_%H%M%S") + (f"_{tag}" if tag else "")
         run_dir = os.path.join(runs_root or settings.runs_dir, dataset, method, run_id)

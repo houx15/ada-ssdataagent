@@ -8,6 +8,7 @@ Output: runs/ada/t3_probe/r2.jsonl
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -36,18 +37,23 @@ SYSTEM = (
 
 
 def main():
-    os.makedirs("runs/ada/t3_probe", exist_ok=True)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--out", default=OUT)
+    ap.add_argument("--reps", type=int, default=N_REP)
+    ap.add_argument("--concurrency", type=int, default=15)
+    args = ap.parse_args()
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     cfg = yaml.safe_load(open("configs/eval/cfps.yaml"))
     responses = list(cfg["t3"]["responses"])
     done = set()
     try:
-        for line in open(OUT):
+        for line in open(args.out):
             r = json.loads(line)
             if r.get("parse_ok"):
                 done.add((r["var"], r["rep"]))
     except FileNotFoundError:
         pass
-    jobs = [(v, rep) for v in responses for rep in range(N_REP)
+    jobs = [(v, rep) for v in responses for rep in range(args.reps)
             if (v, rep) not in done]
     print(f"jobs: {len(jobs)}")
     if not jobs:
@@ -57,7 +63,7 @@ def main():
                     model=st.llm_model, temperature=0.3, max_tokens=4096,
                     json_mode=True)
     lock = threading.Lock()
-    fout = open(OUT, "a")
+    fout = open(args.out, "a")
 
     def run(v, rep):
         q = (f"在一份有代表性的中国中年成年人（45-55岁）调查样本中，"
@@ -75,11 +81,13 @@ def main():
             val, ok = None, False
         with lock:
             fout.write(json.dumps(dict(var=v, rep=rep, parse_ok=ok,
-                                       val=val, content=content),
+                                       val=val, content=content,
+                                       usage=r.usage,
+                                       resolved_model=r.resolved_model),
                                   ensure_ascii=False) + "\n")
             fout.flush()
 
-    with ThreadPoolExecutor(15) as ex:
+    with ThreadPoolExecutor(args.concurrency) as ex:
         for f in as_completed([ex.submit(run, *j) for j in jobs]):
             f.result()
     print("done")

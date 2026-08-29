@@ -26,6 +26,7 @@ Resume: (pair, design, rep) keys already parsed OK are skipped.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -210,7 +211,13 @@ def parse_count(content, n):
 
 
 def main():
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--out", default=OUT)
+    ap.add_argument("--reps", type=int, default=N_REP)
+    ap.add_argument("--batch-size", type=int, default=BATCH)
+    ap.add_argument("--concurrency", type=int, default=CONC)
+    args = ap.parse_args()
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     pairs = all_pairs()
     combos = []  # ordered (x, y): band x, dichotomise y
     for a, b in pairs:
@@ -219,13 +226,14 @@ def main():
     qs_count = combos
     jobs = []
     for design, qs in (("ratio", qs_ratio), ("count", qs_count)):
-        chunks = [qs[i:i + BATCH] for i in range(0, len(qs), BATCH)]
-        for rep in range(N_REP):
+        chunks = [qs[i:i + args.batch_size]
+                  for i in range(0, len(qs), args.batch_size)]
+        for rep in range(args.reps):
             for ci, ch in enumerate(chunks):
                 jobs.append((design, rep, ci, ch))
     done = set()
-    if os.path.exists(OUT):
-        for line in open(OUT):
+    if os.path.exists(args.out):
+        for line in open(args.out):
             try:
                 r = json.loads(line)
                 if r.get("parse_ok"):
@@ -245,7 +253,7 @@ def main():
                            model=st.llm_model, temperature=0.3, top_p=1.0,
                            max_tokens=4096, json_mode=True),
     }
-    out = open(OUT, "a"); lock = threading.Lock()
+    out = open(args.out, "a"); lock = threading.Lock()
 
     def run(job):
         design, rep, ci, ch = job
@@ -258,12 +266,14 @@ def main():
         for _ in range(3):
             r = clients[design].chat(sysp, user)
             rec["content"] = r.content or ""
+            rec["usage"] = r.usage
+            rec["resolved_model"] = r.resolved_model
             if parser(rec["content"], len(ch)) is not None:
                 rec["parse_ok"] = True
                 break
         return rec
 
-    with ThreadPoolExecutor(max_workers=CONC) as ex:
+    with ThreadPoolExecutor(max_workers=args.concurrency) as ex:
         futs = {ex.submit(run, j): j for j in jobs}
         for fut in as_completed(futs):
             rec = fut.result()

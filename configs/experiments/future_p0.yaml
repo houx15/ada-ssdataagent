@@ -1,0 +1,71 @@
+name: future_p0_multimodel_v1
+dataset: cfps
+protocol_version: 1
+access_date: 2026-08-29
+population_n: 1000
+seeds: [4101, 4102, 4103]
+conditions:
+  - direct
+  - full
+evaluator:
+  bootstrap_seeds: [9101, 9102, 9103, 9104, 9105]
+  B: 100
+  sample_n: 500
+elicitation:
+  ada_personas: 1000
+  probe_reps: 6
+  concurrency: 24
+budget_usd: 200
+
+providers:
+  local:
+    kind: local
+  openrouter:
+    kind: openrouter
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    extra_body:
+      provider:
+        data_collection: deny
+        require_parameters: true
+        sort: price
+
+# Prices are USD per million tokens from OpenRouter's official model catalog
+# on access_date. The requested id and resolved model returned by every call
+# are both recorded, so provider-side version resolution remains auditable.
+models:
+  local_glm52:
+    provider: local
+    model: glm-5.2
+    canonical_slug: local/glm-5.2
+    category: current_local_baseline
+    input_usd_per_m: 0
+    output_usd_per_m: 0
+  gpt56_luna:
+    provider: openrouter
+    model: openai/gpt-5.6-luna
+    canonical_slug: openai/gpt-5.6-luna-pro-20260709
+    category: strong_closed_general
+    input_usd_per_m: 0.20
+    output_usd_per_m: 1.20
+  glm53_flash:
+    provider: openrouter
+    model: z-ai/glm-5.3-flash
+    canonical_slug: z-ai/glm-5.3-flash-20260826
+    category: chinese_context
+    input_usd_per_m: 0.075
+    output_usd_per_m: 0.25
+  deepseek_v4_flash:
+    provider: openrouter
+    model: deepseek/deepseek-v4-flash
+    canonical_slug: deepseek/deepseek-v4-flash-20260423
+    category: open_weight
+    input_usd_per_m: 0.084
+    output_usd_per_m: 0.168
+  qwen3_32b:
+    provider: openrouter
+    model: qwen/qwen3-32b
+    canonical_slug: qwen/qwen3-32b-04-28
+    category: medium_open_weight
+    input_usd_per_m: 0.08
+    output_usd_per_m: 0.28

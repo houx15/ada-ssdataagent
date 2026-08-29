@@ -14,6 +14,7 @@ class BootstrapConfig:
     alpha: float = 0.05
     sample_n: int = 500
     id_col: str = "profile_id"
+    seed: int | None = None
 
     @classmethod
     def from_dict(cls, d: dict) -> "BootstrapConfig":
@@ -21,6 +22,7 @@ class BootstrapConfig:
             B=int(d.get("B", 100)),
             alpha=float(d.get("alpha", 0.05)),
             sample_n=int(d.get("sample_n", 500)),
+            seed=(int(d["seed"]) if d.get("seed") is not None else None),
         )
 
 

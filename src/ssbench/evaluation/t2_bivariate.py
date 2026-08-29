@@ -36,7 +36,7 @@ def run_t2(
             if var in df.columns:
                 df[var] = prep_variable(df, var, vcfg)
 
-    rng = RngPair()
+    rng = RngPair(boot.seed)
     results = []
     var_list = list(variables)
 

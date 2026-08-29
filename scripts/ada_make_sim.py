@@ -55,18 +55,21 @@ def field_g_phi(units, var, m):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
+    ap.add_argument("--run-dir", default=RUN,
+                    help="direct seed run containing sim.csv/real.csv")
     ap.add_argument("--beta-modes", default="one,lofo,oracle",
                     help="comma list of: one (pure phi, zero hyperparameter), "
                          "lofo (leave-one-field-out beta), oracle (per-field upper bound)")
     args = ap.parse_args()
     d = args.dir
+    run_dir = os.path.abspath(args.run_dir)
     args.beta_modes = [m.strip() for m in args.beta_modes.split(",") if m.strip()]
 
     levels = json.load(open(os.path.join(d, "levels.json"), encoding="utf-8"))
     units = [json.loads(l) for l in open(os.path.join(d, "units.jsonl"), encoding="utf-8")]
     cfg = yaml.safe_load(open(os.path.join(ROOT, "configs", "eval", "cfps.yaml"), encoding="utf-8"))
-    real = pd.read_csv(os.path.join(RUN, "real.csv"), low_memory=False)
-    sim = pd.read_csv(os.path.join(RUN, "sim.csv"), low_memory=False).copy()
+    real = pd.read_csv(os.path.join(run_dir, "real.csv"), low_memory=False)
+    sim = pd.read_csv(os.path.join(run_dir, "sim.csv"), low_memory=False).copy()
 
     # per-field signals & betas
     info = {}
@@ -186,10 +189,10 @@ def main():
         os.makedirs(shadow, exist_ok=True)
         sim_out.to_csv(os.path.join(shadow, "sim.csv"), index=False)
         if not os.path.exists(os.path.join(shadow, "real.csv")):
-            shutil.copy(os.path.join(RUN, "real.csv"), os.path.join(shadow, "real.csv"))
+            shutil.copy(os.path.join(run_dir, "real.csv"), os.path.join(shadow, "real.csv"))
         with open(os.path.join(shadow, "meta.json"), "w", encoding="utf-8") as f:
             json.dump({"dataset": "cfps", "method": f"ada_{tag}",
-                       "betas": betas, "source_run": RUN, "ada_dir": d}, f, indent=2)
+                       "betas": betas, "source_run": run_dir, "ada_dir": d}, f, indent=2)
         print(f"[{tag}] betas: {betas}")
     print("done")
 

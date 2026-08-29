@@ -17,6 +17,7 @@ Pooling rule (fixed before any evaluation):
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -54,11 +55,11 @@ CN = {
     "Armed forces": "军人",
 }
 
-def build_jobs(cfg):
+def build_jobs(cfg, n_reps=N_REP):
     jobs = []
     for var, spec in cfg["t1"]["variables"].items():
         desc = spec.get("description", spec.get("name", var))
-        for rep in range(N_REP):
+        for rep in range(n_reps):
             if spec["type"] == "categorical":
                 cats = list(spec["allowed"])
                 labels = [CN.get(c, c) for c in cats]
@@ -117,12 +118,17 @@ def parse_num(text, lo, hi):
 
 
 def main():
-    os.makedirs("runs/ada/t1_probe", exist_ok=True)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--out", default=OUT)
+    ap.add_argument("--reps", type=int, default=N_REP)
+    ap.add_argument("--concurrency", type=int, default=CONC)
+    args = ap.parse_args()
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     cfg = yaml.safe_load(open("configs/eval/cfps.yaml"))
-    jobs = build_jobs(cfg)
+    jobs = build_jobs(cfg, args.reps)
     done = set()
     try:
-        for line in open(OUT):
+        for line in open(args.out):
             r = json.loads(line)
             if r.get("parse_ok"):
                 done.add((r["var"], r["rep"]))
@@ -137,7 +143,7 @@ def main():
                     model=st.llm_model, temperature=0.3, max_tokens=4096,
                     json_mode=True)
     lock = threading.Lock()
-    fout = open(OUT, "a")
+    fout = open(args.out, "a")
 
     def run(j):
         r = cli.chat(SYSTEM, j["q"])
@@ -155,11 +161,13 @@ def main():
         with lock:
             fout.write(json.dumps(dict(var=j["var"], rep=j["rep"],
                                        kind=j["kind"], parse_ok=ok,
-                                       val=val, content=content),
+                                       val=val, content=content,
+                                       usage=r.usage,
+                                       resolved_model=r.resolved_model),
                                   ensure_ascii=False) + "\n")
             fout.flush()
 
-    with ThreadPoolExecutor(CONC) as ex:
+    with ThreadPoolExecutor(args.concurrency) as ex:
         futs = [ex.submit(run, j) for j in jobs]
         for i, f in enumerate(as_completed(futs)):
             f.result()

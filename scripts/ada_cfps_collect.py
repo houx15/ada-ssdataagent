@@ -406,6 +406,8 @@ def run_persona(client, pid, actor_idxs, persona, schema, levels, rng,
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n-personas", type=int, default=1000)
+    ap.add_argument("--run-dir", default=RUN,
+                    help="direct seed run containing sim.csv/real.csv")
     ap.add_argument("--fields", default=None, help="comma list; default all T1 fields")
     ap.add_argument("--outdir", default=None)
     ap.add_argument("--resume-dir", default=None)
@@ -429,6 +431,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true",
                     help="build levels/persona specs and exit (no LLM calls)")
     args = ap.parse_args()
+    run_dir = os.path.abspath(args.run_dir)
 
     settings = get_settings()
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -441,7 +444,7 @@ def main():
         cfg = yaml.safe_load(f)
     if args.actor_sim:
         sim_raw = pd.read_csv(args.actor_sim, low_memory=False)
-        base = pd.read_csv(os.path.join(RUN, "sim.csv"), low_memory=False)
+        base = pd.read_csv(os.path.join(run_dir, "sim.csv"), low_memory=False)
         if "profile_id" not in sim_raw.columns:
             # reallocation/swap outputs preserve row order but drop the id column;
             # verify positional alignment on passthrough columns before re-attaching
@@ -455,7 +458,7 @@ def main():
         sim = sim_raw.set_index("profile_id")
         print(f"actor-sim: {args.actor_sim} ({len(sim)} personas)")
     else:
-        sim = pd.read_csv(os.path.join(RUN, "sim.csv"), low_memory=False).set_index("profile_id")
+        sim = pd.read_csv(os.path.join(run_dir, "sim.csv"), low_memory=False).set_index("profile_id")
     sample = pd.read_csv(os.path.join(ROOT, "data", "processed", "cfps", "sample.csv"))
 
     wanted = args.fields.split(",") if args.fields else list(cfg["t1"]["variables"])
@@ -477,8 +480,9 @@ def main():
         for var in wanted:
             vcfg = dict(cfg["t1"]["variables"][var])
             s = prep_variable(sim.reset_index(), var, vcfg).dropna()
-            if len(s) < 100:
-                print(f"[skip] {var}: too few sim values ({len(s)})")
+            min_values = min(100, max(2, len(sim) // 2))
+            if len(s) < min_values:
+                print(f"[skip] {var}: too few sim values ({len(s)} < {min_values})")
                 continue
             labels, kind, meta = build_levels(var, vcfg, s.to_numpy(), grid=args.grid)
             if labels is None or len(labels) < 2:
@@ -649,6 +653,7 @@ def main():
     audit_f.close()
     with open(os.path.join(outdir, "meta.json"), "w", encoding="utf-8") as f:
         json.dump({"model": settings.llm_model, "temperature": TEMPERATURE,
+                    "source_run": run_dir,
                     "max_challenges": MAX_CHALLENGES, "n_random": N_RANDOM,
                     "n_cycle": N_CYCLE, "n_personas": len(specs),
                      "arbiter_scale": args.arbiter_scale, "grid": args.grid,

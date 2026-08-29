@@ -24,6 +24,7 @@ Pre-registered fit (fixed before any evaluation):
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -115,38 +116,80 @@ def fit_pl(p: dict) -> list[float]:
 
 
 def main() -> None:
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--out", default=OUT)
+    ap.add_argument("--target-out", default=None,
+                    help="write pooled Plackett-Luce six-state target JSON")
+    ap.add_argument("--zero-c-first", action="store_true",
+                    help="apply the frozen p_CEM=p_CME=0 identification constraint")
+    ap.add_argument("--reps", type=int, default=N_REP)
+    ap.add_argument("--concurrency", type=int, default=CONC)
+    args = ap.parse_args()
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     done = 0
-    if os.path.exists(OUT):
-        done = sum(1 for line in open(OUT)
+    if os.path.exists(args.out):
+        done = sum(1 for line in open(args.out)
                    if parse(json.loads(line).get("content", "")) is not None)
-    todo = N_REP - done
+    todo = args.reps - done
     print(f"reps done={done} todo={todo}")
-    if todo <= 0:
-        return
-    st = get_settings()
-    client = LLMClient(base_url=st.llm_base_url, api_key=st.llm_api_key,
-                       model=st.llm_model, temperature=0.3, top_p=1.0,
-                       max_tokens=4096, json_mode=True)
-    user = user_prompt()
-    out = open(OUT, "a"); lock = threading.Lock()
+    if todo > 0:
+        st = get_settings()
+        client = LLMClient(base_url=st.llm_base_url, api_key=st.llm_api_key,
+                           model=st.llm_model, temperature=0.3, top_p=1.0,
+                           max_tokens=4096, json_mode=True)
+        user = user_prompt()
+        out = open(args.out, "a"); lock = threading.Lock()
 
-    def run(rep: int):
-        rec = {"rep": rep, "content": ""}
-        for _ in range(3):
-            r = client.chat(SYSTEM, user)
-            rec["content"] = r.content or ""
-            if parse(rec["content"]) is not None:
-                break
-        return rec
+        def run(rep: int):
+            rec = {"rep": rep, "content": ""}
+            for _ in range(3):
+                r = client.chat(SYSTEM, user)
+                rec["content"] = r.content or ""
+                rec["usage"] = r.usage
+                rec["resolved_model"] = r.resolved_model
+                if parse(rec["content"]) is not None:
+                    break
+            return rec
 
-    with ThreadPoolExecutor(max_workers=todo) as ex:
-        futs = {ex.submit(run, rep): rep for rep in range(done, N_REP)}
-        for fut in as_completed(futs):
-            rec = fut.result()
-            with lock:
-                out.write(json.dumps(rec, ensure_ascii=False) + "\n"); out.flush()
-    out.close()
+        with ThreadPoolExecutor(max_workers=min(args.concurrency, todo)) as ex:
+            futs = {ex.submit(run, rep): rep for rep in range(done, args.reps)}
+            for fut in as_completed(futs):
+                rec = fut.result()
+                with lock:
+                    out.write(json.dumps(rec, ensure_ascii=False) + "\n"); out.flush()
+        out.close()
+    if args.target_out:
+        vals = []
+        for line in open(args.out, encoding="utf-8"):
+            parsed = parse(json.loads(line).get("content", ""))
+            if parsed:
+                vals.append(parsed)
+        if not vals:
+            raise SystemExit("no valid T4 probe responses to pool")
+        raw_pooled = {k: float(np.median([v[k] for v in vals if k in v]))
+                      for k in QUESTIONS}
+        pooled = {}
+        for forward, reverse in (("EM", "ME"), ("EC", "CE"), ("MC", "CM")):
+            reconciled = float(np.clip(
+                (raw_pooled[forward] + 1.0 - raw_pooled[reverse]) / 2.0,
+                0.005, 0.995,
+            ))
+            pooled[forward] = reconciled
+            pooled[reverse] = 1.0 - reconciled
+        p = fit_pl(pooled)
+        if args.zero_c_first:
+            p[4] = p[5] = 0.0
+            total = sum(p)
+            p = [x / total for x in p]
+        os.makedirs(os.path.dirname(args.target_out) or ".", exist_ok=True)
+        with open(args.target_out, "w", encoding="utf-8") as handle:
+            json.dump({"states": ["EMC", "ECM", "MEC", "MCE", "CEM", "CME"],
+                       "p": p, "precedence": pooled,
+                       "precedence_raw": raw_pooled,
+                       "zero_c_first": args.zero_c_first,
+                       "source": args.out, "n_valid": len(vals)},
+                      handle, indent=2, ensure_ascii=False)
+        print(f"target -> {args.target_out}")
     print("done")
 
 

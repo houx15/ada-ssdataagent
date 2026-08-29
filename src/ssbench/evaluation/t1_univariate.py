@@ -62,7 +62,7 @@ def run_t1(
     variables: dict,
     boot: BootstrapConfig,
 ) -> dict:
-    rng = RngPair()
+    rng = RngPair(boot.seed)
     rows, entropy_rows = [], []
     for var, vcfg in variables.items():
         vtype = (vcfg.get("type") or "").lower()

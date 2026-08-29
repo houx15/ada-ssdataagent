@@ -42,7 +42,7 @@ def run_t4(
         df_sim[v] = clean_event_series(df_sim[v], spec)
 
     combos = [list(c) for c in itertools.combinations(event_vars, 3)]
-    rng = RngPair()
+    rng = RngPair(boot.seed)
     results, entropy_rows = [], []
 
     for combo in combos:

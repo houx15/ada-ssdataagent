@@ -39,7 +39,7 @@ def run_t5(
 
     event_vars = list(events)
     combos = [list(c) for c in itertools.combinations(event_vars, 3)]
-    rng = RngPair()
+    rng = RngPair(boot.seed)
     results = []
 
     for combo in combos:
