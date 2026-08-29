@@ -29,6 +29,11 @@ providers:
         data_collection: deny
         require_parameters: true
         sort: price
+      # Population generation and elicitation require concise structured JSON;
+      # disable model-default long reasoning so models share the same protocol
+      # and reasoning tokens do not consume the weekly budget invisibly.
+      reasoning:
+        enabled: false
 
 # Prices are USD per million tokens from OpenRouter's official model catalog
 # on access_date. The requested id and resolved model returned by every call
