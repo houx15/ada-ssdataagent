@@ -1,0 +1,3 @@
+interface:
+  display_name: "Kystation Experiments"
+  short_description: "Run Ada SSDataBench experiments on kystation"
