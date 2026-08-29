@@ -80,12 +80,14 @@ def model_cost(model: dict, n_seeds: int) -> float:
 
 
 def print_plan(cfg: dict, models: list[tuple[str, dict]], seeds: list[int],
-               conditions: list[str]) -> None:
+               conditions: list[str], population_n: int | None = None,
+               estimate_scale: float = 1.0) -> None:
     paid = 0.0
     print(f"protocol={cfg['name']} version={cfg['protocol_version']}")
-    print(f"n={cfg['population_n']} seeds={seeds} conditions={conditions}")
+    print(f"n={population_n or cfg['population_n']} seeds={seeds} conditions={conditions}")
     for name, model in models:
-        cost = model_cost(model, len(seeds)) if any(c != "direct" for c in conditions) else 0.0
+        cost = (model_cost(model, len(seeds)) * estimate_scale
+                if any(c != "direct" for c in conditions) else 0.0)
         paid += cost
         print(f"{name:20s} {model['model']:35s} {model['category']:24s} est=${cost:.2f}")
     print(f"estimated paid total=${paid:.2f}; hard budget=${float(cfg['budget_usd']):.2f}")
@@ -399,11 +401,13 @@ def main() -> None:
     unknown = [c for c in conditions if c not in CONDITION_COMPONENTS]
     if unknown:
         raise SystemExit(f"unknown conditions: {unknown}")
-    print_plan(cfg, models, seeds, conditions)
+    effective_n = 20 if args.smoke else int(cfg["population_n"])
+    print_plan(cfg, models, seeds, conditions, population_n=effective_n,
+               estimate_scale=(effective_n / int(cfg["population_n"])))
     if args.command == "plan":
         return
 
-    n = 20 if args.smoke else int(cfg["population_n"])
+    n = effective_n
     el = cfg["elicitation"]
     ev = cfg["evaluator"]
     ada_personas = 20 if args.smoke else int(el["ada_personas"])
@@ -415,8 +419,9 @@ def main() -> None:
     snapshot = suite / "suite_config.json"
     if not snapshot.exists():
         snapshot.write_text(json.dumps({"config": cfg, "smoke": args.smoke,
+                                        "effective_population_n": n,
                                         "conditions": conditions, "created": utcnow()},
-                                       indent=2, ensure_ascii=False), encoding="utf-8")
+                                       indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     for model_name, model in models:
         for seed in seeds:
             UnitRunner(cfg, suite, model_name, model, seed, n, ada_personas, reps,
