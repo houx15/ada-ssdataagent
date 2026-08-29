@@ -11,6 +11,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 import pandas as pd
 import yaml
@@ -77,6 +78,30 @@ def model_cost(model: dict, n_seeds: int) -> float:
     per = (t["prompt"] * float(model["input_usd_per_m"])
            + t["completion"] * float(model["output_usd_per_m"])) / 1_000_000
     return per * n_seeds
+
+
+def direct_artifact_error(run_dir: Path, expected_n: int) -> str | None:
+    """Return why a direct artifact is unusable, or ``None`` when complete."""
+    meta_path = run_dir / "meta.json"
+    sim_path = run_dir / "sim.csv"
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        return f"invalid direct meta: {exc}"
+    for key in ("n", "n_complete", "n_checkpointed"):
+        try:
+            value = int(meta[key])
+        except (KeyError, TypeError, ValueError):
+            return f"direct meta.{key} is missing or invalid"
+        if value != expected_n:
+            return f"direct meta.{key}={value}, expected {expected_n}"
+    try:
+        rows = len(pd.read_csv(sim_path, usecols=["profile_id"]))
+    except (FileNotFoundError, ValueError) as exc:
+        return f"invalid direct sim.csv: {exc}"
+    if rows != expected_n:
+        return f"direct sim.csv has {rows} rows, expected {expected_n}"
+    return None
 
 
 def print_plan(cfg: dict, models: list[tuple[str, dict]], seeds: list[int],
@@ -146,6 +171,13 @@ class UnitRunner:
             env["SDTL_LLM_BASE_URL"] = provider["base_url"]
             env["SDTL_LLM_API_KEY"] = key
             env["SSBENCH_LLM_EXTRA_BODY"] = json.dumps(provider.get("extra_body", {}))
+            # GPT-5.6 Luna does not advertise temperature/top_p support.
+            # Freeze the paid matrix to the request parameters common to all
+            # selected OpenRouter models instead of weakening provider checks.
+            env["SSBENCH_LLM_OMIT_SAMPLING_PARAMS"] = "1"
+        else:
+            env.pop("SSBENCH_LLM_EXTRA_BODY", None)
+            env.pop("SSBENCH_LLM_OMIT_SAMPLING_PARAMS", None)
         env["SDTL_LLM_MODEL"] = self.model["model"]
         env["SDTL_LLM_CONCURRENCY"] = str(self.concurrency)
         env["SSBB_MAX_WORKERS"] = str(self.concurrency)
@@ -155,11 +187,16 @@ class UnitRunner:
         env["SSBENCH_OUTPUT_USD_PER_M"] = str(self.model["output_usd_per_m"])
         return env
 
-    def stage(self, name: str, command: list[str], outputs: list[Path]) -> None:
+    def stage(self, name: str, command: list[str], outputs: list[Path],
+              validator: Callable[[], str | None] | None = None) -> None:
         old = self.state["stages"].get(name, {})
         if old.get("status") == "completed" and all(p.exists() for p in outputs):
-            print(f"[skip] {self.model_name}/seed={self.seed} {name}", flush=True)
-            return
+            problem = validator() if validator else None
+            if problem is None:
+                print(f"[skip] {self.model_name}/seed={self.seed} {name}", flush=True)
+                return
+            print(f"[invalid] {self.model_name}/seed={self.seed} {name}: {problem}",
+                  flush=True)
         self.logs.mkdir(parents=True, exist_ok=True)
         log = self.logs / f"{name}.log"
         self.state["stages"][name] = {
@@ -176,24 +213,39 @@ class UnitRunner:
         entry = self.state["stages"][name]
         entry["finished"] = utcnow()
         entry["exit_code"] = proc.returncode
-        entry["status"] = "completed" if proc.returncode == 0 else "failed"
-        self._save_state()
         if proc.returncode:
+            entry["status"] = "failed"
+            self._save_state()
             raise SystemExit(f"stage {name} failed; inspect {log}")
         missing = [str(p) for p in outputs if not p.exists()]
         if missing:
+            entry["status"] = "failed"
+            entry["validation_error"] = f"missing outputs: {missing}"
+            self._save_state()
             raise SystemExit(f"stage {name} did not create expected outputs: {missing}")
+        problem = validator() if validator else None
+        if problem:
+            entry["status"] = "failed"
+            entry["validation_error"] = problem
+            self._save_state()
+            raise SystemExit(f"stage {name} produced an invalid artifact: {problem}; "
+                             f"inspect {log}")
+        entry["status"] = "completed"
+        entry.pop("validation_error", None)
+        self._save_state()
 
     def py(self, script: str, *args: object) -> list[str]:
         return [sys.executable, str(ROOT / "scripts" / script), *map(str, args)]
 
     def run(self) -> None:
         direct = self.unit / "direct"
+        direct_dir_arg = "--resume-dir" if (direct / "meta.json").exists() else "--run-dir"
         self.stage("direct", self.py(
             "simulate.py", "--dataset", self.cfg["dataset"], "--method", "direct",
             "--n", self.n, "--model", self.model["model"], "--seed", self.seed,
-            "--tag", f"{self.model_name}-s{self.seed}", "--run-dir", direct,
-        ), [direct / "meta.json", direct / "sim.csv", direct / "responses.jsonl"])
+            "--tag", f"{self.model_name}-s{self.seed}", direct_dir_arg, direct,
+        ), [direct / "meta.json", direct / "sim.csv", direct / "responses.jsonl"],
+            validator=lambda: direct_artifact_error(direct, self.n))
 
         need_population = any(c != "direct" for c in self.conditions)
         if need_population:

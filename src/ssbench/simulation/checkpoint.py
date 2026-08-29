@@ -59,6 +59,7 @@ class ResponseAuditLog:
         raw: Optional[str],
         finish_reason: Optional[str],
         usage: dict,
+        error: Optional[str] = None,
         stage: str = "final",
     ) -> None:
         from datetime import datetime
@@ -69,6 +70,7 @@ class ResponseAuditLog:
             "attempt": attempt,
             "stage": stage,
             "finish_reason": finish_reason,
+            "error": error,
             "usage": usage,
             "raw": raw,
         }

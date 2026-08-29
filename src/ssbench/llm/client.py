@@ -27,6 +27,7 @@ class LLMResponse:
     requested_model: Optional[str] = None
     resolved_model: Optional[str] = None
     response_id: Optional[str] = None
+    error: Optional[str] = None
 
     @property
     def ok(self) -> bool:
@@ -66,7 +67,9 @@ class LLMClient:
             {"role": "user", "content": user},
         ]
         last_error: Optional[Exception] = None
+        last_attempt = 0
         for attempt in range(1, self.max_retries + 1):
+            last_attempt = attempt
             try:
                 budgeted_chat_guard()
                 extra_body = {}
@@ -76,14 +79,22 @@ class LLMClient:
                     if not isinstance(parsed, dict):
                         raise ValueError("SSBENCH_LLM_EXTRA_BODY must be a JSON object")
                     extra_body = parsed
+                request_kwargs: dict[str, Any] = {
+                    "model": self.model,
+                    "messages": messages,
+                    "max_tokens": self.max_tokens,
+                }
+                if not _env_flag("SSBENCH_LLM_OMIT_SAMPLING_PARAMS"):
+                    request_kwargs.update(
+                        temperature=self.temperature,
+                        top_p=self.top_p,
+                    )
+                if self.json_mode:
+                    request_kwargs["response_format"] = {"type": "json_object"}
+                if extra_body:
+                    request_kwargs["extra_body"] = extra_body
                 resp = self._client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    temperature=self.temperature,
-                    top_p=self.top_p,
-                    max_tokens=self.max_tokens,
-                    **({"response_format": {"type": "json_object"}} if self.json_mode else {}),
-                    **({"extra_body": extra_body} if extra_body else {}),
+                    **request_kwargs,
                 )
                 choice = resp.choices[0]
                 usage: dict[str, Any] = {}
@@ -121,7 +132,19 @@ class LLMClient:
                         last_error = e
                         break
                 time.sleep(self.retry_delay * (2 ** (attempt - 1)) * (0.5 + random.random()))
-        return LLMResponse(content=None, finish_reason="error", attempts=self.max_retries)
+        error = None
+        if last_error is not None:
+            error = f"{type(last_error).__name__}: {last_error}"
+        return LLMResponse(
+            content=None,
+            finish_reason="error",
+            attempts=last_attempt,
+            error=error,
+        )
+
+
+def _env_flag(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _extract_content(message) -> Optional[str]:

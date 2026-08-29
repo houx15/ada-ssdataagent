@@ -15,7 +15,8 @@ elicitation:
   ada_personas: 1000
   probe_reps: 6
   concurrency: 24
-budget_usd: 200
+# Leave room for the paid channel preflight already recorded this week.
+budget_usd: 199.8
 
 providers:
   local:
@@ -34,6 +35,8 @@ providers:
       # and reasoning tokens do not consume the weekly budget invisibly.
       reasoning:
         enabled: false
+    # The paid matrix sends only parameters supported by every selected
+    # OpenRouter model. temperature/top_p remain local-baseline parameters.
 
 # Prices are USD per million tokens from OpenRouter's official model catalog
 # on access_date. The requested id and resolved model returned by every call

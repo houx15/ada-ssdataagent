@@ -102,7 +102,14 @@ class DirectGeneration:
                     raw=resp.content,
                     finish_reason=resp.finish_reason,
                     usage=resp.usage,
+                    error=resp.error,
                 )
+            # The client has already retried transient transport/provider
+            # errors.  Retrying an empty terminal error again at the profile
+            # layer only multiplies configuration failures (for example, an
+            # unsupported request parameter) without any chance of recovery.
+            if resp.content is None and resp.finish_reason == "error":
+                return build_record({}, sampled_inputs, spec)
             try:
                 js = load_json_safely(resp.content)
             except Exception:  # noqa: BLE001

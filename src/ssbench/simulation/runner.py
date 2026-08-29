@@ -71,6 +71,9 @@ def run_simulation(
         top_p=top_p,
         max_tokens=max_tokens,
     )
+    sampling_parameters_sent = os.getenv(
+        "SSBENCH_LLM_OMIT_SAMPLING_PARAMS", ""
+    ).strip().lower() not in {"1", "true", "yes", "on"}
     gen = create_method(method, client=client, max_attempts=max_attempts)
 
     if resume_dir and run_dir:
@@ -122,6 +125,7 @@ def run_simulation(
         "model": model,
         "temperature": temperature,
         "top_p": top_p,
+        "sampling_parameters_sent": sampling_parameters_sent,
         "max_tokens": max_tokens,
         "n": len(inputs_df),
         "seed": seed,
