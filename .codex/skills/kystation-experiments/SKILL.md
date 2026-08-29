@@ -22,21 +22,33 @@ Use [scripts/kystation.sh](scripts/kystation.sh) for the repeated operations.
 1. Edit code locally and perform only lightweight static checks locally.
 2. Before an experiment, inspect Git status. Remote execution uses committed `main`; never silently run stale code or copy an uncommitted working tree over the server checkout.
 3. If the task authorizes code changes, commit and push them. If committing is not authorized and the relevant code is dirty, stop and ask the user how to proceed.
-4. Run the experiment with `kystation.sh run`. It requires a clean local tree, pushes `main`, pulls it on the server with `--ff-only`, verifies matching SHAs, runs `uv sync --frozen`, and then executes the requested command through remote `uv run`.
-5. Check the remote exit status and expected artifact paths. Experiment outputs normally remain under remote `runs/`.
+4. Use `kystation.sh run` only for short smoke checks. Start every formal experiment or other long-running task with `kystation.sh start <job-name> -- ...`; it runs in a detached `tmux` session so the job survives SSH or Codex disconnection. Both paths require a clean local tree, push `main`, pull it on the server with `--ff-only`, verify matching SHAs, run `uv sync --frozen`, and execute through remote `uv run`.
+5. For a long task, record the tmux session name and inspect it with `job-status`. Confirm the saved exit code and expected artifact paths before declaring completion. Experiment outputs normally remain under remote `runs/`.
 6. Pull back only the specific result directory needed for local inspection. Do not copy the complete remote `runs/` tree by default.
 
-Example:
+Short smoke-check example:
 
 ```bash
 bash .codex/skills/kystation-experiments/scripts/kystation.sh run -- \
   python scripts/simulate.py --dataset cfps --method direct --n 5
 ```
 
+Long experiment example:
+
+```bash
+bash .codex/skills/kystation-experiments/scripts/kystation.sh start cfps-direct-001 -- \
+  python scripts/simulate.py --dataset cfps --method direct --n 1000
+
+bash .codex/skills/kystation-experiments/scripts/kystation.sh job-status cfps-direct-001
+```
+
+Long-task sessions use the `ssb-<job-name>` tmux namespace. Logs and exit codes are stored under remote `runs/remote_jobs/`. Do not reuse an existing job name; use a new descriptive name so prior logs remain intact.
+
 Useful operations:
 
 ```bash
 bash .codex/skills/kystation-experiments/scripts/kystation.sh status
+bash .codex/skills/kystation-experiments/scripts/kystation.sh jobs
 bash .codex/skills/kystation-experiments/scripts/kystation.sh sync-code
 bash .codex/skills/kystation-experiments/scripts/kystation.sh setup
 bash .codex/skills/kystation-experiments/scripts/kystation.sh pull \

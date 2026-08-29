@@ -13,9 +13,20 @@ usage() {
     "Usage: kystation.sh status" \
     "       kystation.sh sync-code" \
     "       kystation.sh setup" \
-    "       kystation.sh run -- <command> [args...]" \
+    "       kystation.sh run -- <short-command> [args...]" \
+    "       kystation.sh start <job-name> -- <long-command> [args...]" \
+    "       kystation.sh job-status <job-name> [log-lines]" \
+    "       kystation.sh jobs" \
     "       kystation.sh pull <remote-relative-path> [local-destination]" \
     "       kystation.sh sync-private"
+}
+
+validate_job_name() {
+  local job_name="${1:-}"
+  if [[ -z "$job_name" || ! "$job_name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+    printf '%s\n' "Job name must use letters, digits, dots, underscores, or hyphens." >&2
+    exit 2
+  fi
 }
 
 require_clean_main() {
@@ -78,6 +89,94 @@ run_remote() {
   ssh "$REMOTE_HOST" "cd $quoted_dir && $remote_command"
 }
 
+start_remote() {
+  local job_name="${1:-}" session jobs_dir log_path exit_path
+  local quoted_dir quoted_uv quoted_log quoted_exit quoted_session
+  local remote_command job_command quoted_job_command arg
+  validate_job_name "$job_name"
+  shift
+  if [[ "${1:-}" == "--" ]]; then
+    shift
+  fi
+  if [[ "$#" -eq 0 ]]; then
+    usage >&2
+    exit 2
+  fi
+
+  sync_code
+  setup_remote
+
+  session="ssb-$job_name"
+  jobs_dir="$REMOTE_DIR/runs/remote_jobs"
+  log_path="$jobs_dir/$job_name.log"
+  exit_path="$jobs_dir/$job_name.exit"
+
+  if ssh "$REMOTE_HOST" tmux has-session -t "$session" 2>/dev/null \
+      || ssh "$REMOTE_HOST" test -e "$log_path" \
+      || ssh "$REMOTE_HOST" test -e "$exit_path"; then
+    printf 'Refusing to reuse job name %s; its session or artifacts already exist.\n' "$job_name" >&2
+    exit 4
+  fi
+
+  ssh "$REMOTE_HOST" mkdir -p "$jobs_dir"
+  printf -v quoted_dir '%q' "$REMOTE_DIR"
+  printf -v quoted_uv '%q' "$REMOTE_UV"
+  printf -v quoted_log '%q' "$log_path"
+  printf -v quoted_exit '%q' "$exit_path"
+  printf -v quoted_session '%q' "$session"
+
+  remote_command="$quoted_uv run"
+  for arg in "$@"; do
+    printf -v remote_command '%s %q' "$remote_command" "$arg"
+  done
+  job_command="cd $quoted_dir && $remote_command > $quoted_log 2>&1; status=\$?; printf '%s\\n' \"\$status\" > $quoted_exit; exit \"\$status\""
+  printf -v quoted_job_command '%q' "$job_command"
+
+  ssh "$REMOTE_HOST" "tmux new-session -d -s $quoted_session $quoted_job_command"
+  if ! ssh "$REMOTE_HOST" tmux has-session -t "$session" 2>/dev/null \
+      && ! ssh "$REMOTE_HOST" test -f "$exit_path"; then
+    printf 'tmux job %s did not start and produced no exit record.\n' "$job_name" >&2
+    exit 5
+  fi
+
+  printf 'Started tmux session %s\nLog: %s\nStatus: kystation.sh job-status %s\n' \
+    "$session" "$log_path" "$job_name"
+}
+
+show_job_status() {
+  local job_name="${1:-}" lines="${2:-40}" session log_path exit_path state exit_code
+  validate_job_name "$job_name"
+  if [[ ! "$lines" =~ ^[1-9][0-9]*$ ]]; then
+    printf '%s\n' "Log line count must be a positive integer." >&2
+    exit 2
+  fi
+
+  session="ssb-$job_name"
+  log_path="$REMOTE_DIR/runs/remote_jobs/$job_name.log"
+  exit_path="$REMOTE_DIR/runs/remote_jobs/$job_name.exit"
+
+  if ssh "$REMOTE_HOST" tmux has-session -t "$session" 2>/dev/null; then
+    state="running"
+  elif ssh "$REMOTE_HOST" test -f "$exit_path"; then
+    exit_code="$(ssh "$REMOTE_HOST" cat "$exit_path")"
+    state="finished (exit=$exit_code)"
+  else
+    state="not found"
+  fi
+  printf 'Job: %s\nSession: %s\nState: %s\n' "$job_name" "$session" "$state"
+  if ssh "$REMOTE_HOST" test -f "$log_path"; then
+    printf '%s\n' "--- log tail ---"
+    ssh "$REMOTE_HOST" tail -n "$lines" "$log_path"
+  fi
+}
+
+list_jobs() {
+  printf '%s\n' "--- active tmux sessions ---"
+  ssh "$REMOTE_HOST" "tmux list-sessions -F '#{session_name} windows=#{session_windows} attached=#{session_attached}' 2>/dev/null || true"
+  printf '%s\n' "--- recorded exits ---"
+  ssh "$REMOTE_HOST" "find '$REMOTE_DIR/runs/remote_jobs' -maxdepth 1 -type f -name '*.exit' -print 2>/dev/null | sort || true"
+}
+
 show_status() {
   local local_sha remote_sha
   local_sha="$(git -C "$LOCAL_ROOT" rev-parse HEAD)"
@@ -123,6 +222,17 @@ case "${1:-}" in
   run)
     shift
     run_remote "$@"
+    ;;
+  start)
+    shift
+    start_remote "$@"
+    ;;
+  job-status)
+    shift
+    show_job_status "$@"
+    ;;
+  jobs)
+    list_jobs
     ;;
   pull)
     shift
