@@ -25,6 +25,7 @@ providers:
     kind: openrouter
     base_url: https://openrouter.ai/api/v1
     api_key_env: OPENROUTER_API_KEY
+    request_timeout_seconds: 120
     extra_body:
       provider:
         data_collection: deny

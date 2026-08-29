@@ -171,6 +171,7 @@ class UnitRunner:
             env["SDTL_LLM_BASE_URL"] = provider["base_url"]
             env["SDTL_LLM_API_KEY"] = key
             env["SSBENCH_LLM_EXTRA_BODY"] = json.dumps(provider.get("extra_body", {}))
+            env["SSBENCH_LLM_TIMEOUT"] = str(provider["request_timeout_seconds"])
             # The paid matrix only sends parameters supported by every model.
             # Freeze the paid matrix to the request parameters common to all
             # selected OpenRouter models instead of weakening provider checks.
@@ -178,6 +179,7 @@ class UnitRunner:
         else:
             env.pop("SSBENCH_LLM_EXTRA_BODY", None)
             env.pop("SSBENCH_LLM_OMIT_SAMPLING_PARAMS", None)
+            env.pop("SSBENCH_LLM_TIMEOUT", None)
         env["SDTL_LLM_MODEL"] = self.model["model"]
         env["SDTL_LLM_CONCURRENCY"] = str(self.concurrency)
         env["SSBB_MAX_WORKERS"] = str(self.concurrency)

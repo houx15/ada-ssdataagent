@@ -63,6 +63,9 @@ def run_simulation(
 
     model = model or settings.llm_model
     max_tokens = max_tokens or DEFAULT_MAX_TOKENS.get(dataset, 16384)
+    request_timeout_seconds = float(os.getenv("SSBENCH_LLM_TIMEOUT", "1200"))
+    if request_timeout_seconds <= 0:
+        raise ValueError("SSBENCH_LLM_TIMEOUT must be positive")
     client = LLMClient(
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
@@ -70,6 +73,7 @@ def run_simulation(
         temperature=temperature,
         top_p=top_p,
         max_tokens=max_tokens,
+        timeout=request_timeout_seconds,
     )
     sampling_parameters_sent = os.getenv(
         "SSBENCH_LLM_OMIT_SAMPLING_PARAMS", ""
@@ -126,6 +130,7 @@ def run_simulation(
         "temperature": temperature,
         "top_p": top_p,
         "sampling_parameters_sent": sampling_parameters_sent,
+        "request_timeout_seconds": request_timeout_seconds,
         "max_tokens": max_tokens,
         "n": len(inputs_df),
         "seed": seed,

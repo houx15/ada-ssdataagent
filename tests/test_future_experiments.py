@@ -21,6 +21,7 @@ class FutureExperimentConfigTests(unittest.TestCase):
             cfg = yaml.safe_load(handle)
         payload = json.dumps({"config": cfg}, default=str)
         self.assertIn("2026-08-29", payload)
+        self.assertEqual(cfg["providers"]["openrouter"]["request_timeout_seconds"], 120)
 
     def test_direct_artifact_requires_complete_population(self):
         with tempfile.TemporaryDirectory() as temp:
