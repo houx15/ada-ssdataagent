@@ -96,6 +96,11 @@ def main():
         var, _ = k.split("|")
         (order_edges if var == ORDER_FIELD else field_edges)[k] = n
     print(f"pooled {n_units} units from {len(args.dirs)} rounds -> {args.out}")
+    if not field_edges:
+        raise SystemExit(
+            "no usable field-edge observations were collected; inspect the "
+            "input rounds' persona counts and units.jsonl files"
+        )
     print(f"field edges: {len(field_edges)} distinct, obs/edge "
           f"p10={np.percentile(list(field_edges.values()), 10):.0f} "
           f"p50={np.percentile(list(field_edges.values()), 50):.0f}")

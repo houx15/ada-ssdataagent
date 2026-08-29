@@ -507,7 +507,12 @@ def main():
     # ---- persona specs ----
     specs = []
     rng = np.random.default_rng(args.seed)
-    pids = list(sample["profile_id"])
+    # Select only personas that exist in the Actor run before applying the
+    # requested sample cap.  This matters for smoke runs, where ``sim`` is a
+    # small prefix of the 1,000-row source sample; sampling from the full
+    # source first can otherwise yield an empty intersection by chance.
+    sim_pids = set(sim.index)
+    pids = [pid for pid in sample["profile_id"] if pid in sim_pids]
     rng.shuffle(pids)
     for pid in pids[:args.n_personas]:
         row = sample[sample.profile_id == pid]
