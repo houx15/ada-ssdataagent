@@ -51,8 +51,9 @@ sync_code() {
   git -C "$LOCAL_ROOT" push origin main
 
   local_sha="$(git -C "$LOCAL_ROOT" rev-parse HEAD)"
-  if ! ssh "$REMOTE_HOST" timeout 45 git -C "$REMOTE_DIR" pull --ff-only origin main; then
-    printf '%s\n' "Remote GitHub pull timed out; falling back to a verified git bundle." >&2
+  remote_sha="$(ssh "$REMOTE_HOST" git -C "$REMOTE_DIR" rev-parse HEAD)"
+  if [[ "$local_sha" != "$remote_sha" ]]; then
+    printf '%s\n' "Remote SHA differs; synchronizing a verified git bundle." >&2
     sync_tmp="$(mktemp -d "${TMPDIR:-/tmp}/ssbench-sync.XXXXXX")"
     bundle_path="$sync_tmp/main.bundle"
     remote_bundle="/tmp/ssbench-main-$local_sha.bundle"
