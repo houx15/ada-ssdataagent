@@ -49,13 +49,13 @@ models:
     category: current_local_baseline
     input_usd_per_m: 0
     output_usd_per_m: 0
-  gemini31_flash_lite:
+  seed20_mini:
     provider: openrouter
-    model: google/gemini-3.1-flash-lite
-    canonical_slug: google/gemini-3.1-flash-lite-20260507
-    category: strong_closed_efficient
-    input_usd_per_m: 0.25
-    output_usd_per_m: 1.50
+    model: bytedance-seed/seed-2.0-mini
+    canonical_slug: bytedance-seed/seed-2.0-mini-20260224
+    category: current_general_efficient
+    input_usd_per_m: 0.10
+    output_usd_per_m: 0.40
   deepseek_v4_flash:
     provider: openrouter
     model: deepseek/deepseek-v4-flash
