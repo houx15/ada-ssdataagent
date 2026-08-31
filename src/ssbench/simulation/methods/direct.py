@@ -19,6 +19,7 @@ from ssbench.simulation.parsing import (
     record_has_empty,
     records_to_frame,
 )
+from ssbench.simulation.lifecycle import apply_postprocess
 from ssbench.simulation.prompts import build_prompt
 
 
@@ -64,7 +65,7 @@ class DirectGeneration:
                     record = None
                 if record is not None:
                     records.append(record)
-                    if checkpoint is not None and not record_has_empty(record, spec.input_names):
+                    if checkpoint is not None and _record_is_complete(record, spec):
                         checkpoint.append(record)
                 with self._lock:
                     self._done += 1
@@ -118,7 +119,7 @@ class DirectGeneration:
                 continue
 
             record = build_record(js, sampled_inputs, spec)
-            if not record_has_empty(record, spec.input_names):
+            if _record_is_complete(record, spec):
                 return record
             last_record = record
             self._sleep()
@@ -128,3 +129,18 @@ class DirectGeneration:
     def _sleep(self):
         if self.retry_delay > 0:
             time.sleep(self.retry_delay)
+
+
+def _record_is_complete(record: dict, spec: DatasetSpec) -> bool:
+    """Match checkpoint eligibility to the final run completeness check."""
+    if record_has_empty(record, spec.input_names):
+        return False
+    frame = records_to_frame([record], spec)
+    if spec.postprocess_modules:
+        frame = apply_postprocess(frame, spec.postprocess_modules)
+    required = [
+        column
+        for column in spec.static_outputs + spec.postprocess_modules
+        if column in frame.columns
+    ]
+    return bool(required) and not bool(frame[required].isna().any(axis=1).iloc[0])
