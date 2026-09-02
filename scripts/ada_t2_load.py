@@ -31,6 +31,7 @@ import json
 import os
 import shutil
 import sys
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -61,6 +62,11 @@ OCC_ORD = {  # ISCO listing order in cfps.yaml
     "Elementary occupations": 8,
     "Armed forces": 9,
 }
+
+
+def stringified_value_counts(values: np.ndarray) -> Counter[str]:
+    """Return a type-stable multiset for marginal-preservation checks."""
+    return Counter(str(value) for value in values)
 
 
 def ordinal_scores(df: pd.DataFrame, col: str):
@@ -302,8 +308,8 @@ def main() -> None:
     for v in t2vars:
         if v in INPUTS:
             continue
-        a = sorted(pd.Series(sim[v].to_numpy(), dtype=object).astype(str))
-        b = sorted(pd.Series(sim2[v].to_numpy(), dtype=object).astype(str))
+        a = stringified_value_counts(sim[v].to_numpy(dtype=object))
+        b = stringified_value_counts(sim2[v].to_numpy(dtype=object))
         assert a == b, f"marginal changed for {v}!"
 
     n_perm = sum(int((sim2[v].to_numpy() != sim[v].to_numpy()).sum())
